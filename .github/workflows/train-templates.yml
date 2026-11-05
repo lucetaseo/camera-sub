@@ -1,13 +1,14 @@
 name: 구도 학습 (Train composition templates)
 
-# Openverse 의 자유 라이선스 사진을 받아 구도 템플릿을 학습하고,
+# COCO 사람 관절 데이터 + Wikimedia Commons·Openverse 자유 라이선스 인물 사진으로
+# 샷 종류별 인물 구도 템플릿을 학습하고,
 # 결과(app/assets/templates.json, learner/reports/training_summary.md)를 같은 브랜치에 커밋한다.
 on:
   workflow_dispatch:
     inputs:
-      per_scene:
-        description: "장면당 내려받을 사진 수"
-        default: "80"
+      per_group:
+        description: "검색 그룹당 최대 사진 수 (전신/반신/클로즈업)"
+        default: "400"
   push:
     paths:
       - "learner/**"
@@ -23,7 +24,7 @@ concurrency:
 jobs:
   train:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
 
@@ -50,13 +51,30 @@ jobs:
           key: references-${{ github.run_id }}
           restore-keys: references-
 
-      - name: 학습용 사진 내려받기 (Openverse)
+      # COCO 2017 사람 관절 주석 (사진 없이 숫자만, 약 250MB, 한 번 받으면 캐시)
+      - name: COCO 관절 데이터 캐시
+        id: coco-cache
+        uses: actions/cache@v4
+        with:
+          path: coco
+          key: coco-person-keypoints-2017
+
+      - name: COCO 관절 데이터 내려받기
+        if: steps.coco-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p coco
+          curl -sSL --retry 3 -o coco/ann.zip http://images.cocodataset.org/annotations/annotations_trainval2017.zip
+          unzip -j -o coco/ann.zip 'annotations/person_keypoints_*.json' -d coco
+          rm coco/ann.zip
+          ls -la coco
+
+      - name: 학습용 인물 사진 내려받기 (Wikimedia Commons + Openverse)
         working-directory: learner
         env:
           # (선택) https://api.openverse.org/v1/#tag/auth 에서 앱을 등록하고 저장소 Secrets 에 넣으면 요청 한도가 늘어난다.
           OPENVERSE_CLIENT_ID: ${{ secrets.OPENVERSE_CLIENT_ID }}
           OPENVERSE_CLIENT_SECRET: ${{ secrets.OPENVERSE_CLIENT_SECRET }}
-        run: python -m composition_learner.fetch --out ../references --per-scene "${{ github.event.inputs.per_scene || '80' }}"
+        run: python -m composition_learner.fetch --out ../references --per-group "${{ github.event.inputs.per_group || '400' }}"
 
       - name: 받은 사진 저장 (다음 실행용)
         if: always()
@@ -68,7 +86,9 @@ jobs:
       - name: 구도 학습
         working-directory: learner
         run: |
-          python -m composition_learner.cli ../references \
+          python -m composition_learner.cli \
+            --images ../references \
+            --coco ../coco/person_keypoints_train2017.json ../coco/person_keypoints_val2017.json \
             --out ../app/assets/templates.json \
             --features-out features.jsonl \
             --summary-out reports/training_summary.md

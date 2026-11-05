@@ -1,80 +1,85 @@
 import 'dart:convert';
 
-/// 구도 템플릿 하나 (learner/ 가 만든 templates.json 의 한 항목).
+/// 인물 구도 템플릿 (learner/ 가 만든 templates.json v2 의 한 항목).
 ///
-/// 좌표는 모두 0~1 로 정규화되어 있다. (0,0)=왼쪽 위.
-class CompositionTemplate {
-  const CompositionTemplate({
+/// 오른쪽을 보는 인물 기준이다. 인물이 왼쪽을 보면 [subjectCx] 를 좌우 반전해서 쓴다.
+class ShotTemplate {
+  const ShotTemplate({
     required this.id,
     required this.description,
     required this.subjectCx,
-    required this.subjectCy,
-    required this.subjectH,
+    required this.eyeY,
+    required this.headSize,
     this.tolX = 0.06,
-    this.tolY = 0.06,
-    this.tolH = 0.05,
-    this.horizonY,
-    this.headY,
+    this.tolEye = 0.045,
+    this.tolSize = 0.02,
     this.support = 0,
   });
 
   final String id;
   final String description;
+
+  /// 얼굴 중심 x
   final double subjectCx;
-  final double subjectCy;
-  final double subjectH;
+
+  /// 눈높이 y
+  final double eyeY;
+
+  /// 눈~어깨 거리 (화면 높이 대비)
+  final double headSize;
   final double tolX;
-  final double tolY;
-  final double tolH;
-  final double? horizonY;
-  final double? headY;
+  final double tolEye;
+  final double tolSize;
   final int support;
 
-  factory CompositionTemplate.fromJson(Map<String, dynamic> j) {
+  double targetX(int faceDir) => faceDir < 0 ? 1 - subjectCx : subjectCx;
+
+  factory ShotTemplate.fromJson(Map<String, dynamic> j) {
     double d(String k, double fallback) => (j[k] as num?)?.toDouble() ?? fallback;
-    return CompositionTemplate(
+    final headSize = d('head_size', 0.15);
+    return ShotTemplate(
       id: j['id'] as String,
       description: j['description'] as String? ?? '',
       subjectCx: d('subject_cx', 0.5),
-      subjectCy: d('subject_cy', 0.5),
-      subjectH: d('subject_h', 0.4),
+      eyeY: d('eye_y', 0.33),
+      headSize: headSize,
       tolX: d('tol_x', 0.06),
-      tolY: d('tol_y', 0.06),
-      tolH: d('tol_h', 0.05),
-      horizonY: (j['horizon_y'] as num?)?.toDouble(),
-      headY: (j['head_y'] as num?)?.toDouble(),
+      tolEye: d('tol_eye', 0.045),
+      tolSize: d('tol_size', headSize * 0.15),
       support: (j['support'] as num?)?.toInt() ?? 0,
     );
   }
 }
 
-/// 장면(바다, 도시 ...)과 그 장면에서 잘 쓰이는 구도 템플릿 목록.
-class Scene {
-  const Scene({required this.id, required this.label, required this.templates});
+/// 샷 종류(전신/무릎샷/반신/상반신/얼굴)와 그 샷의 구도 템플릿들.
+class Shot {
+  const Shot({required this.id, required this.label, required this.templates, this.samples = 0});
 
   final String id;
   final String label;
-  final List<CompositionTemplate> templates;
+  final int samples;
+  final List<ShotTemplate> templates;
 
-  factory Scene.fromJson(Map<String, dynamic> j) => Scene(
+  factory Shot.fromJson(Map<String, dynamic> j) => Shot(
         id: j['id'] as String,
         label: j['label'] as String? ?? j['id'] as String,
+        samples: (j['samples'] as num?)?.toInt() ?? 0,
         templates: (j['templates'] as List)
-            .map((t) => CompositionTemplate.fromJson(t as Map<String, dynamic>))
+            .map((t) => ShotTemplate.fromJson(t as Map<String, dynamic>))
             .toList(),
       );
 }
 
-const supportedSchemaVersion = 1;
+const supportedSchemaVersion = 2;
 
-List<Scene> parseTemplates(String source) {
+List<Shot> parseTemplates(String source) {
   final json = jsonDecode(source) as Map<String, dynamic>;
   final version = json['schema_version'];
   if (version != supportedSchemaVersion) {
     throw FormatException('지원하지 않는 templates.json 버전: $version');
   }
-  return (json['scenes'] as List)
-      .map((s) => Scene.fromJson(s as Map<String, dynamic>))
+  return (json['shots'] as List)
+      .map((s) => Shot.fromJson(s as Map<String, dynamic>))
       .where((s) => s.templates.isNotEmpty)
       .toList();
 }

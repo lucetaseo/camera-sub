@@ -9,15 +9,15 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   // learner/ 로 학습한 결과를 assets/templates.json 에 덮어쓰면 앱에 반영된다.
-  final scenes = parseTemplates(await rootBundle.loadString('assets/templates.json'));
+  final shots = parseTemplates(await rootBundle.loadString('assets/templates.json'));
   final sceneRules = SceneRules.fromJson(await rootBundle.loadString('assets/scene_rules.json'));
-  runApp(CameraSubApp(scenes: scenes, sceneRules: sceneRules));
+  runApp(CameraSubApp(shots: shots, sceneRules: sceneRules));
 }
 
 class CameraSubApp extends StatelessWidget {
-  const CameraSubApp({super.key, required this.scenes, required this.sceneRules});
+  const CameraSubApp({super.key, required this.shots, required this.sceneRules});
 
-  final List<Scene> scenes;
+  final List<Shot> shots;
   final SceneRules sceneRules;
 
   @override
@@ -26,7 +26,7 @@ class CameraSubApp extends StatelessWidget {
       title: '구도 카메라',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: const Color(0xFF4ADE80), brightness: Brightness.dark, useMaterial3: true),
-      home: CameraScreen(scenes: scenes, sceneRules: sceneRules),
+      home: CameraScreen(shots: shots, sceneRules: sceneRules),
     );
   }
 }

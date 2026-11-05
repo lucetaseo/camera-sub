@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:camera/camera.dart';
@@ -6,19 +7,20 @@ import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 
-import '../composition/guide_engine.dart';
+import '../composition/portrait.dart';
 import '../composition/scene_classifier.dart';
 
 /// 한 프레임의 분석 결과. [labels] 는 장면 인식을 돌린 프레임에만 들어 있다.
 class FrameAnalysis {
-  const FrameAnalysis(this.subject, this.labels);
+  const FrameAnalysis(this.keypoints, this.labels);
 
-  final SubjectBox? subject;
+  /// 가장 크게 보이는 인물의 관절 (0~1 정규화, 세로 화면 기준).
+  final Map<String, Kp>? keypoints;
   final List<SceneLabel>? labels;
 }
 
 /// ML Kit 로 카메라 프레임을 분석한다.
-/// - 포즈 검출: 매 프레임, 가장 큰 인물의 박스
+/// - 포즈 검출: 매 프레임, 가장 큰 인물의 관절 위치
 /// - 이미지 라벨링(장면 인식): [labelInterval] 마다 한 번 (배터리·속도 절약)
 class FrameAnalyzer {
   FrameAnalyzer({this.labelInterval = const Duration(milliseconds: 800)})
@@ -50,7 +52,7 @@ class FrameAnalyzer {
       final labels = doLabels
           ? (results[1] as List<ImageLabel>).map((l) => SceneLabel(l.label, l.confidence)).toList()
           : null;
-      return FrameAnalysis(_largestSubject(poses, image, camera), labels);
+      return FrameAnalysis(_largestPerson(poses, image, camera), labels);
     } catch (e) {
       debugPrint('frame analysis failed: $e');
       return const FrameAnalysis(null, null);
@@ -82,32 +84,47 @@ class FrameAnalyzer {
     );
   }
 
-  SubjectBox? _largestSubject(List<Pose> poses, CameraImage image, CameraDescription camera) {
+  static const _mlkitNames = {
+    PoseLandmarkType.nose: 'nose',
+    PoseLandmarkType.leftEye: 'left_eye',
+    PoseLandmarkType.rightEye: 'right_eye',
+    PoseLandmarkType.leftEar: 'left_ear',
+    PoseLandmarkType.rightEar: 'right_ear',
+    PoseLandmarkType.leftShoulder: 'left_shoulder',
+    PoseLandmarkType.rightShoulder: 'right_shoulder',
+    PoseLandmarkType.leftElbow: 'left_elbow',
+    PoseLandmarkType.rightElbow: 'right_elbow',
+    PoseLandmarkType.leftWrist: 'left_wrist',
+    PoseLandmarkType.rightWrist: 'right_wrist',
+    PoseLandmarkType.leftHip: 'left_hip',
+    PoseLandmarkType.rightHip: 'right_hip',
+    PoseLandmarkType.leftKnee: 'left_knee',
+    PoseLandmarkType.rightKnee: 'right_knee',
+    PoseLandmarkType.leftAnkle: 'left_ankle',
+    PoseLandmarkType.rightAnkle: 'right_ankle',
+  };
+
+  Map<String, Kp>? _largestPerson(List<Pose> poses, CameraImage image, CameraDescription camera) {
     // 결과 좌표는 '세워진' 이미지 기준. Android 는 센서가 가로라서 가로/세로가 바뀐다.
     final swap = Platform.isAndroid && (camera.sensorOrientation == 90 || camera.sensorOrientation == 270);
     final w = (swap ? image.height : image.width).toDouble();
     final h = (swap ? image.width : image.height).toDouble();
 
-    SubjectBox? best;
+    Map<String, Kp>? best;
+    var bestArea = 0.0;
     for (final pose in poses) {
-      final pts = pose.landmarks.values.where((l) => l.likelihood >= 0.3).toList();
-      if (pts.length < 4) continue;
-      var minX = double.infinity, minY = double.infinity, maxX = -double.infinity, maxY = -double.infinity;
-      for (final p in pts) {
-        if (p.x < minX) minX = p.x;
-        if (p.x > maxX) maxX = p.x;
-        if (p.y < minY) minY = p.y;
-        if (p.y > maxY) maxY = p.y;
+      final kps = <String, Kp>{
+        for (final e in _mlkitNames.entries)
+          if (pose.landmarks[e.key] case final l?) e.value: Kp(l.x / w, l.y / h, l.likelihood >= 0.5),
+      };
+      final pts = kps.values.where((p) => p.visible && p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1).toList();
+      if (pts.length < 3) continue;
+      final xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+      final area = (xs.reduce(max) - xs.reduce(min)) * (ys.reduce(max) - ys.reduce(min));
+      if (area > bestArea) {
+        bestArea = area;
+        best = kps;
       }
-      // 랜드마크는 눈/코에서 끝나므로 머리 꼭대기까지 늘린다 (learner 와 같은 8%).
-      minY -= (maxY - minY) * 0.08;
-      final box = SubjectBox(
-        (minX / w).clamp(0.0, 1.0),
-        (minY / h).clamp(0.0, 1.0),
-        (maxX / w).clamp(0.0, 1.0),
-        (maxY / h).clamp(0.0, 1.0),
-      );
-      if (best == null || box.height > best.height) best = box;
     }
     return best;
   }

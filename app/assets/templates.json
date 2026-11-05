@@ -1,209 +1,176 @@
 {
-  "schema_version": 1,
-  "scenes": [
+ "schema_version": 2,
+ "_comment": "기본 인물 구도 규칙 (오른쪽을 보는 인물 기준, 왼쪽을 보면 앱이 좌우 반전). learner/ 학습 결과로 교체됩니다.",
+ "shots": [
+  {
+   "id": "full_body",
+   "label": "전신",
+   "samples": 0,
+   "sources": {},
+   "templates": [
     {
-      "id": "landscape",
-      "label": "풍경",
-      "samples": 0,
-      "templates": [
-        {
-          "id": "landscape-1",
-          "description": "인물을 왼쪽 1/3 선에 작게(배경 강조)",
-          "subject_cx": 0.333,
-          "subject_cy": 0.72,
-          "subject_h": 0.18,
-          "tol_x": 0.06,
-          "tol_y": 0.07,
-          "tol_h": 0.05,
-          "horizon_y": 0.667,
-          "head_y": 0.63,
-          "support": 0
-        },
-        {
-          "id": "landscape-2",
-          "description": "인물을 오른쪽 1/3 선에 작게(배경 강조)",
-          "subject_cx": 0.667,
-          "subject_cy": 0.72,
-          "subject_h": 0.18,
-          "tol_x": 0.06,
-          "tol_y": 0.07,
-          "tol_h": 0.05,
-          "horizon_y": 0.667,
-          "head_y": 0.63,
-          "support": 0
-        },
-        {
-          "id": "landscape-3",
-          "description": "인물을 정중앙 아래에 아주 작게(광활함)",
-          "subject_cx": 0.5,
-          "subject_cy": 0.8,
-          "subject_h": 0.1,
-          "tol_x": 0.05,
-          "tol_y": 0.06,
-          "tol_h": 0.04,
-          "horizon_y": 0.6,
-          "head_y": 0.75,
-          "support": 0
-        }
-      ]
+     "id": "full_body-1",
+     "description": "전신 · 얼굴을 시선 반대편 1/3 선에 (시선 앞 여백) · 발끝까지 · 머리 위 여백 조금",
+     "subject_cx": 0.36,
+     "eye_y": 0.24,
+     "head_size": 0.075,
+     "tol_x": 0.06,
+     "tol_eye": 0.045,
+     "tol_size": 0.0112,
+     "turned_ratio": 0,
+     "support": 0,
+     "weight": 0
     },
     {
-      "id": "beach",
-      "label": "바다",
-      "samples": 19,
-      "templates": [
-        {
-          "id": "beach-3",
-          "description": "인물을 정중앙에 크게(인물 강조)",
-          "subject_cx": 0.5522,
-          "subject_cy": 0.5227,
-          "subject_h": 0.6287,
-          "tol_x": 0.0698,
-          "tol_y": 0.0756,
-          "tol_h": 0.0939,
-          "horizon_y": 0.7266,
-          "head_y": 0.1759,
-          "support": 10
-        },
-        {
-          "id": "beach-1",
-          "description": "인물을 왼쪽 1/3 선에 크게(인물 강조)",
-          "subject_cx": 0.367,
-          "subject_cy": 0.5207,
-          "subject_h": 0.7748,
-          "tol_x": 0.1128,
-          "tol_y": 0.05,
-          "tol_h": 0.1075,
-          "horizon_y": 0.7477,
-          "head_y": 0.1361,
-          "support": 7
-        },
-        {
-          "id": "beach-2",
-          "description": "인물을 왼쪽 1/3 선에 작게(배경 강조)",
-          "subject_cx": 0.3504,
-          "subject_cy": 0.7261,
-          "subject_h": 0.2114,
-          "tol_x": 0.1047,
-          "tol_y": 0.0914,
-          "tol_h": 0.0653,
-          "horizon_y": 0.9594,
-          "head_y": 0.6204,
-          "support": 2
-        }
-      ]
-    },
-    {
-      "id": "city",
-      "label": "도시/거리",
-      "samples": 37,
-      "templates": [
-        {
-          "id": "city-2",
-          "description": "인물을 왼쪽에 중간 크기",
-          "subject_cx": 0.4204,
-          "subject_cy": 0.6445,
-          "subject_h": 0.5118,
-          "tol_x": 0.0855,
-          "tol_y": 0.0931,
-          "tol_h": 0.0873,
-          "horizon_y": 0.2562,
-          "head_y": 0.3835,
-          "support": 17
-        },
-        {
-          "id": "city-3",
-          "description": "인물을 정중앙에 작게(배경 강조)",
-          "subject_cx": 0.5375,
-          "subject_cy": 0.6281,
-          "subject_h": 0.2483,
-          "tol_x": 0.0992,
-          "tol_y": 0.1058,
-          "tol_h": 0.0731,
-          "horizon_y": 0.4078,
-          "head_y": 0.5352,
-          "support": 12
-        },
-        {
-          "id": "city-1",
-          "description": "인물을 오른쪽 1/3 선에 크게(인물 강조)",
-          "subject_cx": 0.7222,
-          "subject_cy": 0.6281,
-          "subject_h": 0.5812,
-          "tol_x": 0.0707,
-          "tol_y": 0.05,
-          "tol_h": 0.1632,
-          "horizon_y": 0.1555,
-          "head_y": 0.3672,
-          "support": 8
-        }
-      ]
-    },
-    {
-      "id": "architecture",
-      "label": "건물/대칭",
-      "samples": 8,
-      "templates": [
-        {
-          "id": "architecture-1",
-          "description": "인물을 정중앙에 중간 크기",
-          "subject_cx": 0.5552,
-          "subject_cy": 0.719,
-          "subject_h": 0.3523,
-          "tol_x": 0.0709,
-          "tol_y": 0.1259,
-          "tol_h": 0.116,
-          "horizon_y": 0.593,
-          "head_y": 0.5781,
-          "support": 5
-        },
-        {
-          "id": "architecture-2",
-          "description": "인물을 왼쪽 1/3 선에 크게(인물 강조)",
-          "subject_cx": 0.3762,
-          "subject_cy": 0.5976,
-          "subject_h": 0.6584,
-          "tol_x": 0.1345,
-          "tol_y": 0.066,
-          "tol_h": 0.147,
-          "horizon_y": 0.4313,
-          "head_y": 0.305,
-          "support": 3
-        }
-      ]
-    },
-    {
-      "id": "portrait",
-      "label": "인물 클로즈업",
-      "samples": 0,
-      "templates": [
-        {
-          "id": "portrait-1",
-          "description": "인물을 왼쪽 1/3 선에 크게(인물 강조)",
-          "subject_cx": 0.38,
-          "subject_cy": 0.58,
-          "subject_h": 0.78,
-          "tol_x": 0.07,
-          "tol_y": 0.06,
-          "tol_h": 0.08,
-          "horizon_y": null,
-          "head_y": 0.19,
-          "support": 0
-        },
-        {
-          "id": "portrait-2",
-          "description": "인물을 오른쪽 1/3 선에 크게(인물 강조)",
-          "subject_cx": 0.62,
-          "subject_cy": 0.58,
-          "subject_h": 0.78,
-          "tol_x": 0.07,
-          "tol_y": 0.06,
-          "tol_h": 0.08,
-          "horizon_y": null,
-          "head_y": 0.19,
-          "support": 0
-        }
-      ]
+     "id": "full_body-2",
+     "description": "전신 · 얼굴을 가운데 · 발끝까지 · 대칭 배경에 좋음",
+     "subject_cx": 0.5,
+     "eye_y": 0.28,
+     "head_size": 0.075,
+     "tol_x": 0.06,
+     "tol_eye": 0.045,
+     "tol_size": 0.0112,
+     "turned_ratio": 0,
+     "support": 0,
+     "weight": 0
     }
-  ]
+   ]
+  },
+  {
+   "id": "knee",
+   "label": "무릎샷",
+   "samples": 0,
+   "sources": {},
+   "templates": [
+    {
+     "id": "knee-1",
+     "description": "무릎샷 · 얼굴을 시선 반대편 1/3 선에 (시선 앞 여백) · 무릎 아래에서 자르기",
+     "subject_cx": 0.37,
+     "eye_y": 0.26,
+     "head_size": 0.11,
+     "tol_x": 0.06,
+     "tol_eye": 0.045,
+     "tol_size": 0.0165,
+     "turned_ratio": 0,
+     "support": 0,
+     "weight": 0
+    },
+    {
+     "id": "knee-2",
+     "description": "무릎샷 · 얼굴을 가운데 · 무릎 아래에서 자르기",
+     "subject_cx": 0.5,
+     "eye_y": 0.28,
+     "head_size": 0.11,
+     "tol_x": 0.06,
+     "tol_eye": 0.045,
+     "tol_size": 0.0165,
+     "turned_ratio": 0,
+     "support": 0,
+     "weight": 0
+    }
+   ]
+  },
+  {
+   "id": "waist",
+   "label": "반신",
+   "samples": 0,
+   "sources": {},
+   "templates": [
+    {
+     "id": "waist-1",
+     "description": "반신 · 얼굴을 시선 반대편 1/3 선에 (시선 앞 여백) · 눈높이는 위 1/3 선",
+     "subject_cx": 0.38,
+     "eye_y": 0.3,
+     "head_size": 0.16,
+     "tol_x": 0.06,
+     "tol_eye": 0.045,
+     "tol_size": 0.024,
+     "turned_ratio": 0,
+     "support": 0,
+     "weight": 0
+    },
+    {
+     "id": "waist-2",
+     "description": "반신 · 얼굴을 가운데 · 눈높이는 위 1/3 선",
+     "subject_cx": 0.5,
+     "eye_y": 0.31,
+     "head_size": 0.16,
+     "tol_x": 0.06,
+     "tol_eye": 0.045,
+     "tol_size": 0.024,
+     "turned_ratio": 0,
+     "support": 0,
+     "weight": 0
+    }
+   ]
+  },
+  {
+   "id": "chest",
+   "label": "상반신",
+   "samples": 0,
+   "sources": {},
+   "templates": [
+    {
+     "id": "chest-1",
+     "description": "상반신 · 얼굴을 시선 반대편에 (시선 앞 여백) · 눈높이는 위 1/3 선",
+     "subject_cx": 0.4,
+     "eye_y": 0.33,
+     "head_size": 0.25,
+     "tol_x": 0.06,
+     "tol_eye": 0.045,
+     "tol_size": 0.0375,
+     "turned_ratio": 0,
+     "support": 0,
+     "weight": 0
+    },
+    {
+     "id": "chest-2",
+     "description": "상반신 · 얼굴을 가운데 · 눈높이는 위 1/3 선",
+     "subject_cx": 0.5,
+     "eye_y": 0.34,
+     "head_size": 0.25,
+     "tol_x": 0.06,
+     "tol_eye": 0.045,
+     "tol_size": 0.0375,
+     "turned_ratio": 0,
+     "support": 0,
+     "weight": 0
+    }
+   ]
+  },
+  {
+   "id": "face",
+   "label": "얼굴 클로즈업",
+   "samples": 0,
+   "sources": {},
+   "templates": [
+    {
+     "id": "face-1",
+     "description": "얼굴 클로즈업 · 얼굴을 살짝 시선 반대편에 · 눈높이는 위 1/3 근처",
+     "subject_cx": 0.42,
+     "eye_y": 0.38,
+     "head_size": 0.45,
+     "tol_x": 0.06,
+     "tol_eye": 0.045,
+     "tol_size": 0.0675,
+     "turned_ratio": 0,
+     "support": 0,
+     "weight": 0
+    },
+    {
+     "id": "face-2",
+     "description": "얼굴 클로즈업 · 얼굴을 가운데 · 눈높이는 위 1/3 근처",
+     "subject_cx": 0.5,
+     "eye_y": 0.4,
+     "head_size": 0.45,
+     "tol_x": 0.06,
+     "tol_eye": 0.045,
+     "tol_size": 0.0675,
+     "turned_ratio": 0,
+     "support": 0,
+     "weight": 0
+    }
+   ]
+  }
+ ]
 }

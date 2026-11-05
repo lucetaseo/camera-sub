@@ -9,6 +9,7 @@ import 'package:gal/gal.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
 import '../composition/guide_engine.dart';
+import '../composition/portrait.dart';
 import '../composition/templates.dart';
 import '../composition/scene_classifier.dart';
 import '../vision/frame_analyzer.dart';
@@ -17,9 +18,9 @@ import 'overlay_painter.dart';
 const _album = 'CameraSub';
 
 class CameraScreen extends StatefulWidget {
-  const CameraScreen({super.key, required this.scenes, required this.sceneRules});
+  const CameraScreen({super.key, required this.shots, required this.sceneRules});
 
-  final List<Scene> scenes;
+  final List<Shot> shots;
   final SceneRules sceneRules;
 
   @override
@@ -28,17 +29,16 @@ class CameraScreen extends StatefulWidget {
 
 class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver {
   final _engine = const GuideEngine();
-  final _smoother = SubjectSmoother();
+  final _smoother = KeypointSmoother();
   FrameAnalyzer? _detector;
   late final SceneClassifier _classifier;
   CameraController? _controller;
   StreamSubscription<AccelerometerEvent>? _accelSub;
 
   String? _error;
-  bool _autoScene = true;
-  int _sceneIndex = 0; // 수동 선택일 때
-  CompositionTemplate? _locked; // null 이면 자동으로 가까운 구도 선택
-  SubjectBox? _subject;
+  String? _targetShot; // null 이면 지금 화면의 샷으로 안내
+  ShotTemplate? _locked; // null 이면 자동으로 가까운 구도 선택
+  PortraitFeatures? _subject;
   double _roll = 0;
   bool _showGrid = true;
   bool _capturing = false;
@@ -46,22 +46,11 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
   File? _lastShot;
   double _zoom = 1, _minZoom = 1, _maxZoom = 1, _zoomAtPinchStart = 1;
 
-  Scene get _scene {
-    if (!_autoScene) return widget.scenes[_sceneIndex];
-    final id = _classifier.current;
-    return widget.scenes.firstWhere((s) => s.id == id, orElse: () => widget.scenes[_fallbackIndex]);
-  }
-
-  int get _fallbackIndex {
-    final i = widget.scenes.indexWhere((s) => s.id == widget.sceneRules.fallbackScene);
-    return i < 0 ? 0 : i;
-  }
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _classifier = SceneClassifier(widget.sceneRules, availableScenes: widget.scenes.map((s) => s.id).toSet());
+    _classifier = SceneClassifier(widget.sceneRules);
     _accelSub = accelerometerEventStream(samplingPeriod: SensorInterval.uiInterval).listen((e) {
       final roll = math.atan2(e.x, e.y) * 180 / math.pi;
       // 저역 통과 필터로 손떨림 제거
@@ -107,7 +96,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
       _minZoom = await controller.getMinZoomLevel();
       _maxZoom = math.min(await controller.getMaxZoomLevel(), 8);
       _zoom = _minZoom;
-      _detector = FrameAnalyzer()..sceneEnabled = _autoScene;
+      _detector = FrameAnalyzer();
       if (!mounted) {
         await controller.dispose();
         return;
@@ -131,12 +120,9 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
       final r = await _detector?.process(image, c.description);
       if (r == null || !mounted) return;
       setState(() {
-        _subject = _smoother.update(r.subject);
-        if (_autoScene && r.labels != null) {
-          final before = _classifier.current;
-          final after = _classifier.update(r.labels!, _subject);
-          if (before != after) _locked = null; // 장면이 바뀌면 템플릿 고정 해제
-        }
+        final kps = _smoother.update(r.keypoints);
+        _subject = kps == null ? null : computeFeatures(kps);
+        if (r.labels != null) _classifier.update(r.labels!);
       });
     });
   }
@@ -191,17 +177,16 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
       ..showSnackBar(SnackBar(content: Text(msg), duration: const Duration(seconds: 2)));
   }
 
-  void _setAutoScene(bool auto, {int? index}) {
-    setState(() {
-      _autoScene = auto;
-      if (index != null) _sceneIndex = index;
-      _locked = null;
-    });
-    _detector?.sceneEnabled = auto;
-  }
+  void _setTargetShot(String? shot) => setState(() {
+        _targetShot = shot;
+        _locked = null;
+      });
+
+  GuideResult? _lastResult;
 
   void _cycleTemplate() {
-    final ts = _scene.templates;
+    final ts = _lastResult?.shot.templates;
+    if (ts == null) return;
     setState(() {
       if (_locked == null) {
         _locked = ts.first;
@@ -215,14 +200,25 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
   @override
   Widget build(BuildContext context) {
     final c = _controller;
-    final result = _engine.evaluate(scene: _scene, subject: _subject, rollDeg: _roll, lockedTemplate: _locked);
+    // 고정한 템플릿이 다른 샷의 것이면 풀어준다 (샷이 바뀐 경우).
+    final shotId = _targetShot ?? _subject?.shot;
+    if (_locked != null && shotId != null && !_locked!.id.startsWith('$shotId-')) _locked = null;
+    final result = _engine.evaluate(
+      shots: widget.shots,
+      subject: _subject,
+      rollDeg: _roll,
+      targetShot: _targetShot,
+      lockedTemplate: _locked,
+      preferCentered: _classifier.current == 'architecture',
+    );
+    _lastResult = result;
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
           children: [
-            _sceneBar(),
+            _shotBar(result),
             _templateBar(result),
             Expanded(
               child: Center(
@@ -264,10 +260,9 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
             CameraPreview(c),
             CustomPaint(
               painter: CompositionOverlayPainter(
-                template: result.template,
+                result: result,
                 subject: _subject,
                 rollDeg: _roll,
-                ready: result.ready,
                 showGrid: _showGrid,
               ),
             ),
@@ -285,31 +280,34 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     );
   }
 
-  Widget _sceneBar() => SizedBox(
-        height: 48,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          itemCount: widget.scenes.length + 1,
-          separatorBuilder: (_, _) => const SizedBox(width: 8),
-          itemBuilder: (_, i) {
-            if (i == 0) {
-              return ChoiceChip(
-                avatar: const Icon(Icons.auto_awesome, size: 16),
-                label: Text(_autoScene ? '자동 · ${_scene.label}' : '자동'),
-                selected: _autoScene,
-                onSelected: (_) => _setAutoScene(true),
-              );
-            }
-            final idx = i - 1;
+  Widget _shotBar(GuideResult result) {
+    final observed = result.observedShot == null ? null : shotLabels[result.observedShot];
+    return SizedBox(
+      height: 48,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        itemCount: widget.shots.length + 1,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          if (i == 0) {
             return ChoiceChip(
-              label: Text(widget.scenes[idx].label),
-              selected: !_autoScene && idx == _sceneIndex,
-              onSelected: (_) => _setAutoScene(false, index: idx),
+              avatar: const Icon(Icons.auto_awesome, size: 16),
+              label: Text(_targetShot == null && observed != null ? '자동 · $observed' : '자동'),
+              selected: _targetShot == null,
+              onSelected: (_) => _setTargetShot(null),
             );
-          },
-        ),
-      );
+          }
+          final shot = widget.shots[i - 1];
+          return ChoiceChip(
+            label: Text(shot.label),
+            selected: _targetShot == shot.id,
+            onSelected: (_) => _setTargetShot(shot.id),
+          );
+        },
+      ),
+    );
+  }
 
   Widget _templateBar(GuideResult result) => InkWell(
         onTap: _cycleTemplate,
@@ -318,6 +316,10 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
           child: Row(
             children: [
               _pill(_locked == null ? '자동' : '고정'),
+              if (_classifier.currentLabel != null) ...[
+                const SizedBox(width: 6),
+                _pill(_classifier.currentLabel!),
+              ],
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -433,6 +435,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
         HintAction.tiltDown => Icons.arrow_downward,
         HintAction.stepBack => Icons.zoom_out_map,
         HintAction.stepCloser => Icons.center_focus_strong,
+        HintAction.jointCut => Icons.content_cut,
         HintAction.findSubject => Icons.person_search,
         HintAction.ready => Icons.check_circle,
       };

@@ -1,32 +1,105 @@
 {
-  "schema_version": 1,
-  "_comment": "ML Kit 이미지 라벨(영어 단어) → 장면 가중치. 라벨 목록: https://developers.google.com/ml-kit/vision/image-labeling/label-map",
-  "min_score": 0.5,
-  "portrait_subject_h": 0.6,
-  "fallback_scene": "landscape",
-  "scenes": {
-    "beach": {
-      "beach": 1.0, "sea": 1.0, "ocean": 1.0, "coast": 0.9, "surfing": 0.8, "wave": 0.8, "waves": 0.8,
-      "sand": 0.6, "pier": 0.6, "swimwear": 0.6, "bikini": 0.6, "boat": 0.5, "lighthouse": 0.6, "shore": 0.9
-    },
-    "landscape": {
-      "mountain": 1.0, "lake": 0.8, "river": 0.7, "waterfall": 0.9, "cliff": 0.8, "desert": 0.9, "field": 0.7,
-      "forest": 0.8, "jungle": 0.8, "glacier": 0.9, "iceberg": 0.8, "snow": 0.6, "canyon": 0.9, "hill": 0.7,
-      "grassland": 0.8, "meadow": 0.8, "sunset": 0.5, "park": 0.4, "flower": 0.4, "tree": 0.3, "sky": 0.3,
-      "cloud": 0.3, "cave": 0.6, "volcano": 0.9
-    },
-    "city": {
-      "city": 1.0, "metropolis": 1.0, "town": 0.8, "street": 1.0, "road": 0.8, "alley": 0.9, "car": 0.6,
-      "bus": 0.6, "taxi": 0.7, "bicycle": 0.5, "motorcycle": 0.5, "vehicle": 0.5, "crowd": 0.6, "shop": 0.7,
-      "market": 0.7, "neon": 0.8, "skyscraper": 0.6, "bridge": 0.5, "traffic": 0.8, "sidewalk": 0.9
-    },
-    "architecture": {
-      "architecture": 1.0, "building": 0.6, "temple": 1.0, "church": 1.0, "cathedral": 1.0, "mosque": 1.0,
-      "castle": 1.0, "palace": 1.0, "tower": 0.8, "arch": 1.0, "column": 0.8, "monument": 0.9, "statue": 0.6,
-      "stairs": 0.6, "door": 0.6, "window": 0.4, "skyscraper": 0.4, "museum": 0.8, "fountain": 0.6, "shrine": 1.0
-    },
-    "portrait": {
-      "selfie": 1.0, "smile": 0.4, "beard": 0.4, "eyelash": 0.6
-    }
+ "schema_version": 2,
+ "_comment": "ML Kit 이미지 라벨(영어 단어) → 배경 장면. 인물 구도는 샷 종류로 정하고, 장면은 안내 보조(건물이면 가운데 대칭 구도 우선)에만 쓴다. 라벨 목록: https://developers.google.com/ml-kit/vision/image-labeling/label-map",
+ "min_score": 0.5,
+ "scenes": {
+  "beach": {
+   "label": "바다",
+   "words": {
+    "beach": 1.0,
+    "sea": 1.0,
+    "ocean": 1.0,
+    "coast": 0.9,
+    "surfing": 0.8,
+    "wave": 0.8,
+    "waves": 0.8,
+    "sand": 0.6,
+    "pier": 0.6,
+    "swimwear": 0.6,
+    "bikini": 0.6,
+    "boat": 0.5,
+    "lighthouse": 0.6,
+    "shore": 0.9
+   }
+  },
+  "landscape": {
+   "label": "풍경",
+   "words": {
+    "mountain": 1.0,
+    "lake": 0.8,
+    "river": 0.7,
+    "waterfall": 0.9,
+    "cliff": 0.8,
+    "desert": 0.9,
+    "field": 0.7,
+    "forest": 0.8,
+    "jungle": 0.8,
+    "glacier": 0.9,
+    "iceberg": 0.8,
+    "snow": 0.6,
+    "canyon": 0.9,
+    "hill": 0.7,
+    "grassland": 0.8,
+    "meadow": 0.8,
+    "sunset": 0.5,
+    "park": 0.4,
+    "flower": 0.4,
+    "tree": 0.3,
+    "sky": 0.3,
+    "cloud": 0.3,
+    "cave": 0.6,
+    "volcano": 0.9
+   }
+  },
+  "city": {
+   "label": "도시",
+   "words": {
+    "city": 1.0,
+    "metropolis": 1.0,
+    "town": 0.8,
+    "street": 1.0,
+    "road": 0.8,
+    "alley": 0.9,
+    "car": 0.6,
+    "bus": 0.6,
+    "taxi": 0.7,
+    "bicycle": 0.5,
+    "motorcycle": 0.5,
+    "vehicle": 0.5,
+    "crowd": 0.6,
+    "shop": 0.7,
+    "market": 0.7,
+    "neon": 0.8,
+    "skyscraper": 0.6,
+    "bridge": 0.5,
+    "traffic": 0.8,
+    "sidewalk": 0.9
+   }
+  },
+  "architecture": {
+   "label": "건물",
+   "words": {
+    "architecture": 1.0,
+    "building": 0.6,
+    "temple": 1.0,
+    "church": 1.0,
+    "cathedral": 1.0,
+    "mosque": 1.0,
+    "castle": 1.0,
+    "palace": 1.0,
+    "tower": 0.8,
+    "arch": 1.0,
+    "column": 0.8,
+    "monument": 0.9,
+    "statue": 0.6,
+    "stairs": 0.6,
+    "door": 0.6,
+    "window": 0.4,
+    "skyscraper": 0.4,
+    "museum": 0.8,
+    "fountain": 0.6,
+    "shrine": 1.0
+   }
   }
+ }
 }
