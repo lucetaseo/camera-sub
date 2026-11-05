@@ -15,7 +15,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 
-from .cluster import build_templates, merge_with_existing, render_summary
+from .cluster import build_templates, merge_with_existing, position_table, render_summary
 from .portrait import compute_features, is_good_composition
 
 MODEL_URL = (
@@ -67,7 +67,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--features-out", type=Path, help="학습에 쓴 특징을 JSONL 로 저장")
     p.add_argument("--summary-out", type=Path, help="학습 요약(Markdown)")
     p.add_argument("--model", type=Path, default=Path(__file__).resolve().parent.parent / "models" / "pose_landmarker_lite.task")
-    p.add_argument("--image-weight", type=float, default=3.0, help="직접 고른/검색한 사진의 가중치 (COCO=1)")
+    p.add_argument("--image-weight", type=float, default=3.0, help="직접 고르거나 검색한 인물 사진의 가중치")
+    p.add_argument("--coco-weight", type=float, default=0.25, help="COCO(일상 스냅) 가중치. 수가 많아 낮게 둔다")
     p.add_argument("--include-landscape", action="store_true", help="가로 사진도 학습 (앱은 세로 촬영 기준)")
     p.add_argument("--max-k", type=int, default=3)
     p.add_argument("--min-samples", type=int, default=20, help="이보다 표본이 적은 샷은 기존 템플릿 유지")
@@ -102,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
                     stats[f"{s.source}: 관절/머리 잘림 제외"] += 1
                     continue
                 stats[f"{s.source}: 학습 사용"] += 1
-                items.append((f, args.image_weight if s.source == "images" else 1.0, s.source))
+                items.append((f, args.image_weight if s.source == "images" else args.coco_weight, s.source))
                 if feats_fp:
                     feats_fp.write(json.dumps({"source": s.source, "ref": s.ref, **f.to_dict()}, ensure_ascii=False) + "\n")
     finally:
@@ -121,7 +122,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.summary_out:
         args.summary_out.parent.mkdir(parents=True, exist_ok=True)
         lic = license_counts(args.images) if args.images and args.images.exists() else {}
-        args.summary_out.write_text(render_summary(result, used, dict(sorted(stats.items())), lic), encoding="utf-8")
+        args.summary_out.write_text(
+            render_summary(result, used, dict(sorted(stats.items())), lic, position_table(items)), encoding="utf-8"
+        )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"학습된 샷: {', '.join(used)} → {args.out}", file=sys.stderr)

@@ -55,8 +55,16 @@ class PortraitFeatures:
 
     @property
     def canonical_x(self) -> float:
-        """왼쪽을 보는 사진은 좌우를 뒤집어 '오른쪽을 보는' 기준으로 맞춘 x."""
-        return 1 - self.head_x if self.face_dir < 0 else self.head_x
+        """좌우를 맞춘 x.
+
+        - 왼쪽을 보면 좌우 반전 → '오른쪽을 보는' 기준 (x < 0.5 이면 시선 앞 여백)
+        - 정면이면 왼쪽 절반으로 접음 → 왼쪽 1/3 과 오른쪽 1/3 을 같은 구도로 본다
+        """
+        if self.face_dir < 0:
+            return 1 - self.head_x
+        if self.face_dir == 0:
+            return min(self.head_x, 1 - self.head_x)
+        return self.head_x
 
     def to_dict(self) -> dict:
         d = asdict(self)

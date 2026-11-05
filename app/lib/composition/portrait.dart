@@ -63,7 +63,12 @@ class PortraitFeatures {
   /// 화면 아래 끝에서 잘린 관절.
   final String? jointCut;
 
-  double get canonicalX => faceDir < 0 ? 1 - headX : headX;
+  /// 좌우를 맞춘 x (learner 와 같음): 왼쪽을 보면 반전, 정면이면 왼쪽 절반으로 접음.
+  double get canonicalX {
+    if (faceDir < 0) return 1 - headX;
+    if (faceDir == 0) return headX < 1 - headX ? headX : 1 - headX;
+    return headX;
+  }
 }
 
 bool _inFrame(Kp? p, [double margin = 0.01]) =>

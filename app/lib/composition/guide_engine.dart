@@ -112,7 +112,7 @@ class GuideEngine {
         shot: shot,
         observedShot: subject.shot,
         template: t,
-        targetX: t.targetX(faceDir),
+        targetX: t.targetX(faceDir, subject.headX),
         score: _clamp(40 - tiltPenalty),
         hints: hints,
         ready: false,
@@ -120,7 +120,7 @@ class GuideEngine {
     }
 
     final t = lockedTemplate ?? (preferCentered ? _mostCentered(shot) : closestTemplate(shot, subject));
-    final targetX = t.targetX(faceDir);
+    final targetX = t.targetX(faceDir, subject.headX);
 
     // 잘림
     var cutPenalty = 0.0;
@@ -185,7 +185,7 @@ class GuideEngine {
 
   /// 허용 오차로 나눈 거리. 1 이하면 템플릿 범위 안.
   static double distance(ShotTemplate t, PortraitFeatures s) {
-    final x = (s.headX - t.targetX(s.faceDir)) / t.tolX;
+    final x = (s.headX - t.targetX(s.faceDir, s.headX)) / t.tolX;
     final y = (s.eyeY - t.eyeY) / t.tolEye;
     final h = (s.headSize - t.headSize) / t.tolSize;
     return math.sqrt(x * x + y * y + h * h) / math.sqrt(3);

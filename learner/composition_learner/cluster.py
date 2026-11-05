@@ -17,12 +17,12 @@ MIN_TOL_SIZE_RATIO = 0.12  # head_size 의 12%
 
 
 def describe(shot: str, x: float, eye_y: float) -> str:
-    """오른쪽을 보는 기준(canonical) 템플릿을 사람이 읽는 설명으로."""
+    """좌우를 맞춘 기준(canonical: 오른쪽을 보거나 정면이면 왼쪽 절반) 템플릿을 설명으로."""
     if abs(x - 0.5) < 0.06:
         horiz = "얼굴을 가운데"
     elif x < 0.5:
         third = "1/3 선" if abs(x - 1 / 3) < 0.07 else "쪽"
-        horiz = f"얼굴을 시선 반대편 {third}에 (시선 앞 여백)"
+        horiz = f"얼굴을 {third}에 (시선 앞 여백)"
     else:
         horiz = "얼굴을 시선 쪽에 (뒤 여백)"
     if abs(eye_y - 1 / 3) < 0.05:
@@ -60,8 +60,8 @@ def build_templates(
             continue
         x = np.array([[f.canonical_x, f.eye_y, f.head_size] for f, _, _ in group], dtype=float)
         w = np.array([wt for _, wt, _ in group], dtype=float)
-        # 크기(head_size)는 샷마다 범위가 달라서 위치와 비슷한 비중이 되도록 정규화
-        scale = np.array([1.0, 1.0, max(1e-6, float(np.median(x[:, 2])))])
+        # 세 특징이 같은 비중이 되도록 표준편차로 나눈다 (얼굴 크기만으로 나뉘지 않게)
+        scale = np.maximum(x.std(axis=0), 1e-6)
         k = max(1, min(max_k, len(group) // min_per_cluster))
         labels = (
             np.zeros(len(group), dtype=int)
@@ -113,8 +113,28 @@ def merge_with_existing(learned: dict, existing: Optional[dict], min_samples: in
     return {"schema_version": SCHEMA_VERSION, "shots": ordered}, sorted(good, key=SHOT_TYPES.index)
 
 
+def position_table(items: Iterable[tuple[PortraitFeatures, float, str]]) -> str:
+    """출처·샷별로 얼굴이 화면 왼쪽/가운데/오른쪽 중 어디에 있었는지 (학습 데이터 진단용)."""
+    groups: dict[tuple[str, str], list[PortraitFeatures]] = defaultdict(list)
+    for f, _, src in items:
+        groups[(src, f.shot)].append(f)
+    lines = ["| 출처 | 샷 | 표본 | 왼쪽 (x<0.4) | 가운데 | 오른쪽 (x>0.6) | 얼굴 돌림 |", "|---|---|---|---|---|---|---|"]
+    for (src, shot), fs in sorted(groups.items(), key=lambda kv: (kv[0][0], SHOT_TYPES.index(kv[0][1]))):
+        n = len(fs)
+        pct = lambda c: f"{100 * c / n:.0f}%"
+        left = sum(f.head_x < 0.4 for f in fs)
+        right = sum(f.head_x > 0.6 for f in fs)
+        turned = sum(f.face_dir != 0 for f in fs)
+        lines.append(f"| {src} | {SHOT_LABELS[shot]} | {n:,} | {pct(left)} | {pct(n - left - right)} | {pct(right)} | {pct(turned)} |")
+    return "\n".join(lines)
+
+
 def render_summary(
-    result: dict, learned_ids: list[str], stats: dict[str, int], licenses: dict[str, int]
+    result: dict,
+    learned_ids: list[str],
+    stats: dict[str, int],
+    licenses: dict[str, int],
+    positions: str = "",
 ) -> str:
     lines = ["# 인물 구도 학습 결과", ""]
     if stats:
@@ -127,7 +147,9 @@ def render_summary(
         src = ", ".join(f"{k} {v:,}" for k, v in s.get("sources", {}).items()) or "-"
         state = "학습" if learned else ("이전 학습 유지" if s.get("samples") else "기본 규칙")
         lines.append(f"| {s['label']} | {s.get('samples', 0):,} | {src} | {len(s['templates'])} | {state} |")
-    lines += ["", "## 템플릿 (오른쪽을 보는 인물 기준, 왼쪽을 보면 좌우 반전)", ""]
+    if positions:
+        lines += ["", "## 학습 데이터의 얼굴 위치", "", positions]
+    lines += ["", "## 템플릿 (오른쪽을 보는/정면 인물 기준, 앱에서 시선·위치에 맞춰 좌우 반전)", ""]
     for s in result["shots"]:
         for t in s["templates"]:
             if "eye_y" not in t:

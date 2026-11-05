@@ -50,6 +50,15 @@ void main() {
     expect(r.ready, isTrue);
   });
 
+  test('정면 인물은 지금 있는 쪽의 1/3 템플릿으로 맞춘다', () {
+    final r = engine.evaluate(shots: shots, subject: f(x: 0.62, dir: 0), rollDeg: 0, lockedTemplate: left);
+    expect(r.targetX, closeTo(0.62, 1e-9));
+    expect(r.ready, isTrue);
+    final r2 = engine.evaluate(shots: shots, subject: f(x: 0.45, dir: 0), rollDeg: 0, lockedTemplate: left);
+    expect(r2.targetX, closeTo(0.38, 1e-9));
+    expect(r2.hints.first.action, HintAction.panRight);
+  });
+
   test('시선 앞 여백이 없으면 시선 방향으로 카메라를 돌리라고 안내', () {
     // 오른쪽을 보는데 얼굴이 오른쪽에 붙어 있음 → 템플릿(0.38) 기준으로 카메라를 오른쪽으로
     final r = engine.evaluate(shots: shots, subject: f(x: 0.6), rollDeg: 0, lockedTemplate: left);

@@ -32,7 +32,12 @@ class ShotTemplate {
   final double tolSize;
   final int support;
 
-  double targetX(int faceDir) => faceDir < 0 ? 1 - subjectCx : subjectCx;
+  /// 인물에 맞춘 목표 x. 왼쪽을 보면 좌우 반전, 정면이면 지금 인물이 있는 쪽으로.
+  double targetX(int faceDir, double headX) {
+    if (faceDir < 0) return 1 - subjectCx;
+    if (faceDir == 0 && headX > 0.5) return 1 - subjectCx;
+    return subjectCx;
+  }
 
   factory ShotTemplate.fromJson(Map<String, dynamic> j) {
     double d(String k, double fallback) => (j[k] as num?)?.toDouble() ?? fallback;

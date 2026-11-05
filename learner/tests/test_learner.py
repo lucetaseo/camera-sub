@@ -188,3 +188,20 @@ def test_download_skips_existing_and_falls_back_to_thumbnail(monkeypatch, tmp_pa
     assert fetch.download([mk("a"), mk("b")], tmp_path, limit=5, delay=0) == 2
     assert fetch.download([mk("a"), mk("c")], tmp_path, limit=5, delay=0) == 3  # a 는 이미 있음
     assert fetch.count_existing(tmp_path) == 3 and (tmp_path / "c.jpg").exists()
+
+
+def test_frontal_faces_fold_to_left_half_and_cluster_by_position():
+    from composition_learner.cluster import position_table
+
+    assert feat("waist", 0.7, 0.3, 0.15, face_dir=0).canonical_x == pytest.approx(0.3)
+    assert feat("waist", 0.7, 0.3, 0.15, face_dir=1).canonical_x == pytest.approx(0.7)  # 뒤 여백 구도는 유지
+    # 왼쪽 1/3 과 오른쪽 1/3 정면 사진이 '가운데'로 평균 나지 않고 같은 1/3 템플릿으로 모인다
+    items = [(feat("waist", 0.33, 0.3, 0.15, face_dir=0), 1.0, "images") for _ in range(6)]
+    items += [(feat("waist", 0.67, 0.3, 0.15, face_dir=0), 1.0, "images") for _ in range(6)]
+    items += [(feat("waist", 0.5, 0.3, 0.15, face_dir=0), 1.0, "coco") for _ in range(6)]
+    out = build_templates(items, max_k=2, min_per_cluster=5)
+    xs = sorted(t["subject_cx"] for t in out["shots"][0]["templates"])
+    assert xs == [pytest.approx(0.33, abs=0.01), pytest.approx(0.5, abs=0.01)]
+    table = position_table(items)
+    assert "| images | 반신 | 12 | 50% | 0% | 50% | 0% |" in table
+    assert "| coco | 반신 | 6 | 0% | 100% | 0% | 0% |" in table
