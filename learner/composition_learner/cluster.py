@@ -21,8 +21,8 @@ def describe(shot: str, x: float, eye_y: float) -> str:
     if abs(x - 0.5) < 0.06:
         horiz = "얼굴을 가운데"
     elif x < 0.5:
-        third = "1/3 선" if abs(x - 1 / 3) < 0.07 else "쪽"
-        horiz = f"얼굴을 {third}에 (시선 앞 여백)"
+        where = "1/3 선" if abs(x - 1 / 3) < 0.07 else "한쪽"
+        horiz = f"얼굴을 {where}에 (시선 앞 여백)"
     else:
         horiz = "얼굴을 시선 쪽에 (뒤 여백)"
     if abs(eye_y - 1 / 3) < 0.05:

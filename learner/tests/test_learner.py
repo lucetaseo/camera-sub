@@ -68,6 +68,7 @@ def test_build_templates_per_shot_with_mirroring_and_weights():
 def test_describe_center_and_back_space():
     assert "가운데" in describe("chest", 0.5, 0.4)
     assert "뒤 여백" in describe("chest", 0.62, 0.4)
+    assert "얼굴을 한쪽에 (시선 앞 여백)" in describe("knee", 0.42, 0.25)
 
 
 def test_merge_keeps_old_shots_and_ignores_old_schema():
