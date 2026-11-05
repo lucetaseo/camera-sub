@@ -42,9 +42,28 @@ jobs:
           pip install -r requirements.txt
           python -m pytest -q
 
+      # 지난 실행에서 받은 사진을 이어서 쓴다 (실행할수록 사진이 쌓임, 요청 한도 절약)
+      - name: 이전에 받은 사진 불러오기
+        uses: actions/cache/restore@v4
+        with:
+          path: references
+          key: references-${{ github.run_id }}
+          restore-keys: references-
+
       - name: 학습용 사진 내려받기 (Openverse)
         working-directory: learner
+        env:
+          # (선택) https://api.openverse.org/v1/#tag/auth 에서 앱을 등록하고 저장소 Secrets 에 넣으면 요청 한도가 늘어난다.
+          OPENVERSE_CLIENT_ID: ${{ secrets.OPENVERSE_CLIENT_ID }}
+          OPENVERSE_CLIENT_SECRET: ${{ secrets.OPENVERSE_CLIENT_SECRET }}
         run: python -m composition_learner.fetch --out ../references --per-scene "${{ github.event.inputs.per_scene || '80' }}"
+
+      - name: 받은 사진 저장 (다음 실행용)
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: references
+          key: references-${{ github.run_id }}
 
       - name: 구도 학습
         working-directory: learner

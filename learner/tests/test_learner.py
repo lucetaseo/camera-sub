@@ -92,3 +92,52 @@ def test_parse_openverse_results_filters_landscape_and_small():
     assert photos[0].scene == "beach" and photos[0].license == "cc0"
     url = build_query_url("woman beach", 2)
     assert "aspect_ratio=tall" in url and "page=2" in url and "license=cc0%2Cpdm" in url
+
+
+def test_get_with_retry_backs_off_then_succeeds(monkeypatch):
+    import urllib.error
+
+    from composition_learner import fetch
+
+    calls = []
+
+    def fake_get(url, timeout=30, auth=False):
+        calls.append(url)
+        if len(calls) < 3:
+            raise urllib.error.HTTPError(url, 500, "err", {}, None)
+        return b"ok"
+
+    waits = []
+    monkeypatch.setattr(fetch, "_get", fake_get)
+    assert fetch.get_with_retry("u", backoff=1, sleep=waits.append) == b"ok"
+    assert waits == [1, 3]
+
+
+def test_get_with_retry_gives_up_with_rate_limited(monkeypatch):
+    import urllib.error
+
+    import pytest
+
+    from composition_learner import fetch
+
+    def fake_get(url, timeout=30, auth=False):
+        raise urllib.error.HTTPError(url, 429, "slow down", {"Retry-After": "2"}, None)
+
+    waits = []
+    monkeypatch.setattr(fetch, "_get", fake_get)
+    with pytest.raises(fetch.RateLimited):
+        fetch.get_with_retry("u", retries=2, sleep=waits.append)
+    assert waits == [2.0, 2.0]
+
+
+def test_fetch_image_falls_back_to_thumbnail(monkeypatch):
+    from composition_learner import fetch
+
+    def fake_get(url, timeout=30, auth=False):
+        if "orig" in url:
+            raise OSError("403")
+        return b"x" * 20_000
+
+    monkeypatch.setattr(fetch, "_get", fake_get)
+    p = fetch.Photo("i", "beach", "https://orig/a.jpg", "", "", "cc0", "", "", "", "", 800, 1200, "https://thumb/a")
+    assert len(fetch.fetch_image(p)) == 20_000
