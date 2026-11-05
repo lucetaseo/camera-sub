@@ -1,176 +1,239 @@
 {
- "schema_version": 2,
- "_comment": "기본 인물 구도 규칙 (오른쪽을 보는 인물 기준, 왼쪽을 보면 앱이 좌우 반전). learner/ 학습 결과로 교체됩니다.",
- "shots": [
-  {
-   "id": "full_body",
-   "label": "전신",
-   "samples": 0,
-   "sources": {},
-   "templates": [
+  "schema_version": 2,
+  "shots": [
     {
-     "id": "full_body-1",
-     "description": "전신 · 얼굴을 시선 반대편 1/3 선에 (시선 앞 여백) · 발끝까지 · 머리 위 여백 조금",
-     "subject_cx": 0.36,
-     "eye_y": 0.24,
-     "head_size": 0.075,
-     "tol_x": 0.06,
-     "tol_eye": 0.045,
-     "tol_size": 0.0112,
-     "turned_ratio": 0,
-     "support": 0,
-     "weight": 0
+      "id": "full_body",
+      "label": "전신",
+      "samples": 5240,
+      "sources": {
+        "images": 265,
+        "coco": 4975
+      },
+      "templates": [
+        {
+          "id": "full_body-1",
+          "description": "전신 · 얼굴을 가운데 · 눈높이는 위쪽",
+          "subject_cx": 0.4859,
+          "eye_y": 0.2695,
+          "head_size": 0.0769,
+          "tol_x": 0.1251,
+          "tol_eye": 0.0994,
+          "tol_size": 0.0124,
+          "turned_ratio": 0.699,
+          "support": 2144,
+          "weight": 2426.0
+        },
+        {
+          "id": "full_body-2",
+          "description": "전신 · 얼굴을 가운데 · 눈높이는 위 1/3 선",
+          "subject_cx": 0.4985,
+          "eye_y": 0.376,
+          "head_size": 0.0347,
+          "tol_x": 0.161,
+          "tol_eye": 0.1541,
+          "tol_size": 0.0128,
+          "turned_ratio": 0.798,
+          "support": 2255,
+          "weight": 2377.0
+        },
+        {
+          "id": "full_body-3",
+          "description": "전신 · 얼굴을 가운데 · 눈높이는 위쪽",
+          "subject_cx": 0.4931,
+          "eye_y": 0.1943,
+          "head_size": 0.123,
+          "tol_x": 0.1101,
+          "tol_eye": 0.0904,
+          "tol_size": 0.0246,
+          "turned_ratio": 0.61,
+          "support": 841,
+          "weight": 967.0
+        }
+      ]
     },
     {
-     "id": "full_body-2",
-     "description": "전신 · 얼굴을 가운데 · 발끝까지 · 대칭 배경에 좋음",
-     "subject_cx": 0.5,
-     "eye_y": 0.28,
-     "head_size": 0.075,
-     "tol_x": 0.06,
-     "tol_eye": 0.045,
-     "tol_size": 0.0112,
-     "turned_ratio": 0,
-     "support": 0,
-     "weight": 0
-    }
-   ]
-  },
-  {
-   "id": "knee",
-   "label": "무릎샷",
-   "samples": 0,
-   "sources": {},
-   "templates": [
-    {
-     "id": "knee-1",
-     "description": "무릎샷 · 얼굴을 시선 반대편 1/3 선에 (시선 앞 여백) · 무릎 아래에서 자르기",
-     "subject_cx": 0.37,
-     "eye_y": 0.26,
-     "head_size": 0.11,
-     "tol_x": 0.06,
-     "tol_eye": 0.045,
-     "tol_size": 0.0165,
-     "turned_ratio": 0,
-     "support": 0,
-     "weight": 0
+      "id": "knee",
+      "label": "무릎샷",
+      "samples": 747,
+      "sources": {
+        "images": 66,
+        "coco": 681
+      },
+      "templates": [
+        {
+          "id": "knee-1",
+          "description": "무릎샷 · 얼굴을 가운데 · 눈높이는 위쪽",
+          "subject_cx": 0.4849,
+          "eye_y": 0.2535,
+          "head_size": 0.1212,
+          "tol_x": 0.1306,
+          "tol_eye": 0.0953,
+          "tol_size": 0.0168,
+          "turned_ratio": 0.713,
+          "support": 359,
+          "weight": 407.0
+        },
+        {
+          "id": "knee-3",
+          "description": "무릎샷 · 얼굴을 가운데 · 눈높이는 위 1/3 선",
+          "subject_cx": 0.4829,
+          "eye_y": 0.3577,
+          "head_size": 0.0591,
+          "tol_x": 0.1595,
+          "tol_eye": 0.1604,
+          "tol_size": 0.0215,
+          "turned_ratio": 0.764,
+          "support": 242,
+          "weight": 268.0
+        },
+        {
+          "id": "knee-2",
+          "description": "무릎샷 · 얼굴을 가운데 · 눈높이는 위쪽",
+          "subject_cx": 0.4833,
+          "eye_y": 0.2286,
+          "head_size": 0.1802,
+          "tol_x": 0.1069,
+          "tol_eye": 0.0818,
+          "tol_size": 0.0372,
+          "turned_ratio": 0.692,
+          "support": 146,
+          "weight": 204.0
+        }
+      ]
     },
     {
-     "id": "knee-2",
-     "description": "무릎샷 · 얼굴을 가운데 · 무릎 아래에서 자르기",
-     "subject_cx": 0.5,
-     "eye_y": 0.28,
-     "head_size": 0.11,
-     "tol_x": 0.06,
-     "tol_eye": 0.045,
-     "tol_size": 0.0165,
-     "turned_ratio": 0,
-     "support": 0,
-     "weight": 0
-    }
-   ]
-  },
-  {
-   "id": "waist",
-   "label": "반신",
-   "samples": 0,
-   "sources": {},
-   "templates": [
-    {
-     "id": "waist-1",
-     "description": "반신 · 얼굴을 시선 반대편 1/3 선에 (시선 앞 여백) · 눈높이는 위 1/3 선",
-     "subject_cx": 0.38,
-     "eye_y": 0.3,
-     "head_size": 0.16,
-     "tol_x": 0.06,
-     "tol_eye": 0.045,
-     "tol_size": 0.024,
-     "turned_ratio": 0,
-     "support": 0,
-     "weight": 0
+      "id": "waist",
+      "label": "반신",
+      "samples": 1752,
+      "sources": {
+        "images": 131,
+        "coco": 1621
+      },
+      "templates": [
+        {
+          "id": "waist-1",
+          "description": "반신 · 얼굴을 가운데 · 눈높이는 위쪽",
+          "subject_cx": 0.5052,
+          "eye_y": 0.2774,
+          "head_size": 0.1495,
+          "tol_x": 0.1225,
+          "tol_eye": 0.0957,
+          "tol_size": 0.0207,
+          "turned_ratio": 0.672,
+          "support": 751,
+          "weight": 825.0
+        },
+        {
+          "id": "waist-2",
+          "description": "반신 · 얼굴을 가운데 · 눈높이는 위쪽",
+          "subject_cx": 0.5113,
+          "eye_y": 0.2342,
+          "head_size": 0.2197,
+          "tol_x": 0.1027,
+          "tol_eye": 0.0697,
+          "tol_size": 0.0294,
+          "turned_ratio": 0.566,
+          "support": 505,
+          "weight": 615.0
+        },
+        {
+          "id": "waist-3",
+          "description": "반신 · 얼굴을 가운데 · 눈높이는 위 1/3 선",
+          "subject_cx": 0.4837,
+          "eye_y": 0.3318,
+          "head_size": 0.0737,
+          "tol_x": 0.1452,
+          "tol_eye": 0.1526,
+          "tol_size": 0.0273,
+          "turned_ratio": 0.73,
+          "support": 496,
+          "weight": 574.0
+        }
+      ]
     },
     {
-     "id": "waist-2",
-     "description": "반신 · 얼굴을 가운데 · 눈높이는 위 1/3 선",
-     "subject_cx": 0.5,
-     "eye_y": 0.31,
-     "head_size": 0.16,
-     "tol_x": 0.06,
-     "tol_eye": 0.045,
-     "tol_size": 0.024,
-     "turned_ratio": 0,
-     "support": 0,
-     "weight": 0
-    }
-   ]
-  },
-  {
-   "id": "chest",
-   "label": "상반신",
-   "samples": 0,
-   "sources": {},
-   "templates": [
-    {
-     "id": "chest-1",
-     "description": "상반신 · 얼굴을 시선 반대편에 (시선 앞 여백) · 눈높이는 위 1/3 선",
-     "subject_cx": 0.4,
-     "eye_y": 0.33,
-     "head_size": 0.25,
-     "tol_x": 0.06,
-     "tol_eye": 0.045,
-     "tol_size": 0.0375,
-     "turned_ratio": 0,
-     "support": 0,
-     "weight": 0
+      "id": "chest",
+      "label": "상반신",
+      "samples": 1231,
+      "sources": {
+        "images": 155,
+        "coco": 1076
+      },
+      "templates": [
+        {
+          "id": "chest-1",
+          "description": "상반신 · 얼굴을 가운데 · 눈높이는 위 1/3 선",
+          "subject_cx": 0.5107,
+          "eye_y": 0.3247,
+          "head_size": 0.2567,
+          "tol_x": 0.0986,
+          "tol_eye": 0.0971,
+          "tol_size": 0.0374,
+          "turned_ratio": 0.622,
+          "support": 598,
+          "weight": 786.0
+        },
+        {
+          "id": "chest-3",
+          "description": "상반신 · 얼굴을 가운데 · 눈높이는 위 1/3 선",
+          "subject_cx": 0.5223,
+          "eye_y": 0.3625,
+          "head_size": 0.3903,
+          "tol_x": 0.0824,
+          "tol_eye": 0.0833,
+          "tol_size": 0.0606,
+          "turned_ratio": 0.561,
+          "support": 271,
+          "weight": 389.0
+        },
+        {
+          "id": "chest-2",
+          "description": "상반신 · 얼굴을 가운데 · 눈높이는 위 1/3 선",
+          "subject_cx": 0.496,
+          "eye_y": 0.3724,
+          "head_size": 0.1112,
+          "tol_x": 0.1605,
+          "tol_eye": 0.165,
+          "tol_size": 0.0506,
+          "turned_ratio": 0.652,
+          "support": 362,
+          "weight": 366.0
+        }
+      ]
     },
     {
-     "id": "chest-2",
-     "description": "상반신 · 얼굴을 가운데 · 눈높이는 위 1/3 선",
-     "subject_cx": 0.5,
-     "eye_y": 0.34,
-     "head_size": 0.25,
-     "tol_x": 0.06,
-     "tol_eye": 0.045,
-     "tol_size": 0.0375,
-     "turned_ratio": 0,
-     "support": 0,
-     "weight": 0
+      "id": "face",
+      "label": "얼굴 클로즈업",
+      "samples": 0,
+      "sources": {},
+      "templates": [
+        {
+          "id": "face-1",
+          "description": "얼굴 클로즈업 · 얼굴을 살짝 시선 반대편에 · 눈높이는 위 1/3 근처",
+          "subject_cx": 0.42,
+          "eye_y": 0.38,
+          "head_size": 0.45,
+          "tol_x": 0.06,
+          "tol_eye": 0.045,
+          "tol_size": 0.0675,
+          "turned_ratio": 0,
+          "support": 0,
+          "weight": 0
+        },
+        {
+          "id": "face-2",
+          "description": "얼굴 클로즈업 · 얼굴을 가운데 · 눈높이는 위 1/3 근처",
+          "subject_cx": 0.5,
+          "eye_y": 0.4,
+          "head_size": 0.45,
+          "tol_x": 0.06,
+          "tol_eye": 0.045,
+          "tol_size": 0.0675,
+          "turned_ratio": 0,
+          "support": 0,
+          "weight": 0
+        }
+      ]
     }
-   ]
-  },
-  {
-   "id": "face",
-   "label": "얼굴 클로즈업",
-   "samples": 0,
-   "sources": {},
-   "templates": [
-    {
-     "id": "face-1",
-     "description": "얼굴 클로즈업 · 얼굴을 살짝 시선 반대편에 · 눈높이는 위 1/3 근처",
-     "subject_cx": 0.42,
-     "eye_y": 0.38,
-     "head_size": 0.45,
-     "tol_x": 0.06,
-     "tol_eye": 0.045,
-     "tol_size": 0.0675,
-     "turned_ratio": 0,
-     "support": 0,
-     "weight": 0
-    },
-    {
-     "id": "face-2",
-     "description": "얼굴 클로즈업 · 얼굴을 가운데 · 눈높이는 위 1/3 근처",
-     "subject_cx": 0.5,
-     "eye_y": 0.4,
-     "head_size": 0.45,
-     "tol_x": 0.06,
-     "tol_eye": 0.045,
-     "tol_size": 0.0675,
-     "turned_ratio": 0,
-     "support": 0,
-     "weight": 0
-    }
-   ]
-  }
- ]
+  ]
 }
