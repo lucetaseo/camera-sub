@@ -34,13 +34,13 @@ jobs:
           cache-dependency-path: learner/requirements.txt
 
       - name: 시스템 라이브러리 (MediaPipe 용)
-        run: sudo apt-get update -q && sudo apt-get install -y -q libegl1 libgles2
+        run: sudo apt-get update -q && sudo apt-get install -y -q libegl1 libgles2 libgl1
 
       - name: 학습 도구 설치 및 테스트
         working-directory: learner
         run: |
           pip install -r requirements.txt
-          pytest -q tests
+          python -m pytest -q
 
       - name: 학습용 사진 내려받기 (Openverse)
         working-directory: learner
