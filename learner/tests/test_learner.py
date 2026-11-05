@@ -74,7 +74,9 @@ def test_merge_keeps_defaults_for_scenes_with_few_samples():
     assert ids["beach"]["templates"][0]["id"].startswith("beach-1")  # 학습 결과로 교체
     assert ids["city"]["templates"][0]["id"] == "city-default"  # 표본이 부족해 기본 유지
     assert "park" in ids  # 새 장면 추가
+    merged["scenes"].append({"id": "old", "label": "예전", "samples": 9, "templates": []})
     md = render_summary(merged, used, {"beach": 12}, {"cc0": 5})
+    assert "| 예전 | 0 | - | 0 | 이전 학습 유지 |" in md
     assert "| 바다 | 12 | 9 |" in md and "기본 규칙" in md and "cc0: 5장" in md
 
 

@@ -119,7 +119,7 @@ def render_summary(result: dict, learned_ids: list[str], image_counts: dict[str,
         learned = s["id"] in learned_ids
         lines.append(
             f"| {s['label']} | {image_counts.get(s['id'], 0)} | {s['samples'] if learned else '-'} | "
-            f"{len(s['templates'])} | {'학습' if learned else '기본 규칙'} |"
+            f"{len(s['templates'])} | {'학습' if learned else ('이전 학습 유지' if s.get('samples') else '기본 규칙')} |"
         )
     lines += ["", "## 학습된 템플릿", ""]
     for s in result["scenes"]:
