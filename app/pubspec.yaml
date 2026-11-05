@@ -38,6 +38,7 @@ dependencies:
   google_mlkit_pose_detection: ^0.16.1
   sensors_plus: ^7.1.1
   gal: ^2.3.3
+  google_mlkit_image_labeling: ^0.16.1
 
 dev_dependencies:
   flutter_test:
@@ -57,6 +58,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/templates.json
+    - assets/scene_rules.json
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

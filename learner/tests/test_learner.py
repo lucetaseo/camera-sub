@@ -56,3 +56,39 @@ def test_build_templates_clusters_two_compositions():
 def test_build_templates_single_cluster_when_few_samples():
     out = build_templates([feat("city", 0.5, 0.5, 0.4), feat("city", 0.52, 0.5, 0.42)])
     assert len(out["scenes"][0]["templates"]) == 1
+
+
+def test_merge_keeps_defaults_for_scenes_with_few_samples():
+    from composition_learner.cluster import merge_with_existing, render_summary
+
+    existing = {"schema_version": 1, "scenes": [
+        {"id": "beach", "label": "바다", "samples": 0, "templates": [{"id": "beach-default"}]},
+        {"id": "city", "label": "도시/거리", "samples": 0, "templates": [{"id": "city-default"}]},
+    ]}
+    learned = build_templates(
+        [feat("beach", 0.33, 0.7, 0.2)] * 9 + [feat("city", 0.5, 0.6, 0.4)] * 3 + [feat("park", 0.5, 0.6, 0.3)] * 9
+    )
+    merged, used = merge_with_existing(learned, existing, min_samples=8)
+    assert used == ["beach", "park"]
+    ids = {s["id"]: s for s in merged["scenes"]}
+    assert ids["beach"]["templates"][0]["id"].startswith("beach-1")  # 학습 결과로 교체
+    assert ids["city"]["templates"][0]["id"] == "city-default"  # 표본이 부족해 기본 유지
+    assert "park" in ids  # 새 장면 추가
+    md = render_summary(merged, used, {"beach": 12}, {"cc0": 5})
+    assert "| 바다 | 12 | 9 |" in md and "기본 규칙" in md and "cc0: 5장" in md
+
+
+def test_parse_openverse_results_filters_landscape_and_small():
+    from composition_learner.fetch import build_query_url, parse_results
+
+    payload = {"results": [
+        {"id": "a", "url": "https://x/a.jpg", "width": 800, "height": 1200, "license": "cc0", "creator": "kim"},
+        {"id": "b", "url": "https://x/b.jpg", "width": 1200, "height": 800},
+        {"id": "c", "url": "https://x/c.jpg", "width": 300, "height": 500},
+        {"id": "d", "url": None, "width": 800, "height": 1200},
+    ]}
+    photos = parse_results(payload, "beach")
+    assert [p.id for p in photos] == ["a"]
+    assert photos[0].scene == "beach" and photos[0].license == "cc0"
+    url = build_query_url("woman beach", 2)
+    assert "aspect_ratio=tall" in url and "page=2" in url and "license=cc0%2Cpdm" in url

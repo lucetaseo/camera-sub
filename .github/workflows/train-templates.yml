@@ -1,0 +1,86 @@
+name: 구도 학습 (Train composition templates)
+
+# Openverse 의 자유 라이선스 사진을 받아 구도 템플릿을 학습하고,
+# 결과(app/assets/templates.json, learner/reports/training_summary.md)를 같은 브랜치에 커밋한다.
+on:
+  workflow_dispatch:
+    inputs:
+      per_scene:
+        description: "장면당 내려받을 사진 수"
+        default: "80"
+  push:
+    paths:
+      - "learner/**"
+      - ".github/workflows/train-templates.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: train-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: learner/requirements.txt
+
+      - name: 시스템 라이브러리 (MediaPipe 용)
+        run: sudo apt-get update -q && sudo apt-get install -y -q libegl1 libgles2
+
+      - name: 학습 도구 설치 및 테스트
+        working-directory: learner
+        run: |
+          pip install -r requirements.txt
+          pytest -q tests
+
+      - name: 학습용 사진 내려받기 (Openverse)
+        working-directory: learner
+        run: python -m composition_learner.fetch --out ../references --per-scene "${{ github.event.inputs.per_scene || '80' }}"
+
+      - name: 구도 학습
+        working-directory: learner
+        run: |
+          python -m composition_learner.cli ../references \
+            --out ../app/assets/templates.json \
+            --features-out features.jsonl \
+            --summary-out reports/training_summary.md
+          cat reports/training_summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: 앱 테스트 (학습된 템플릿이 앱에서 읽히는지 확인)
+        working-directory: app
+        run: flutter test
+
+      - name: 사진 출처와 특징 보관 (Artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-data
+          path: |
+            references/*/credits.jsonl
+            learner/features.jsonl
+          retention-days: 30
+
+      - name: 결과 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/assets/templates.json learner/reports/training_summary.md
+          if git diff --cached --quiet; then
+            echo "변경 없음"
+          else
+            git commit -m "구도 템플릿 학습 결과 갱신 (Openverse 사진)"
+            git push
+          fi

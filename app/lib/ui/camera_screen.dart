@@ -10,15 +10,17 @@ import 'package:sensors_plus/sensors_plus.dart';
 
 import '../composition/guide_engine.dart';
 import '../composition/templates.dart';
-import '../vision/subject_detector.dart';
+import '../composition/scene_classifier.dart';
+import '../vision/frame_analyzer.dart';
 import 'overlay_painter.dart';
 
 const _album = 'CameraSub';
 
 class CameraScreen extends StatefulWidget {
-  const CameraScreen({super.key, required this.scenes});
+  const CameraScreen({super.key, required this.scenes, required this.sceneRules});
 
   final List<Scene> scenes;
+  final SceneRules sceneRules;
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -27,12 +29,14 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver {
   final _engine = const GuideEngine();
   final _smoother = SubjectSmoother();
-  SubjectDetector? _detector;
+  FrameAnalyzer? _detector;
+  late final SceneClassifier _classifier;
   CameraController? _controller;
   StreamSubscription<AccelerometerEvent>? _accelSub;
 
   String? _error;
-  int _sceneIndex = 0;
+  bool _autoScene = true;
+  int _sceneIndex = 0; // 수동 선택일 때
   CompositionTemplate? _locked; // null 이면 자동으로 가까운 구도 선택
   SubjectBox? _subject;
   double _roll = 0;
@@ -42,12 +46,22 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
   File? _lastShot;
   double _zoom = 1, _minZoom = 1, _maxZoom = 1, _zoomAtPinchStart = 1;
 
-  Scene get _scene => widget.scenes[_sceneIndex];
+  Scene get _scene {
+    if (!_autoScene) return widget.scenes[_sceneIndex];
+    final id = _classifier.current;
+    return widget.scenes.firstWhere((s) => s.id == id, orElse: () => widget.scenes[_fallbackIndex]);
+  }
+
+  int get _fallbackIndex {
+    final i = widget.scenes.indexWhere((s) => s.id == widget.sceneRules.fallbackScene);
+    return i < 0 ? 0 : i;
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _classifier = SceneClassifier(widget.sceneRules, availableScenes: widget.scenes.map((s) => s.id).toSet());
     _accelSub = accelerometerEventStream(samplingPeriod: SensorInterval.uiInterval).listen((e) {
       final roll = math.atan2(e.x, e.y) * 180 / math.pi;
       // 저역 통과 필터로 손떨림 제거
@@ -93,7 +107,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
       _minZoom = await controller.getMinZoomLevel();
       _maxZoom = math.min(await controller.getMaxZoomLevel(), 8);
       _zoom = _minZoom;
-      _detector = SubjectDetector();
+      _detector = FrameAnalyzer()..sceneEnabled = _autoScene;
       if (!mounted) {
         await controller.dispose();
         return;
@@ -116,7 +130,14 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     await c.startImageStream((image) async {
       final r = await _detector?.process(image, c.description);
       if (r == null || !mounted) return;
-      setState(() => _subject = _smoother.update(r.box));
+      setState(() {
+        _subject = _smoother.update(r.subject);
+        if (_autoScene && r.labels != null) {
+          final before = _classifier.current;
+          final after = _classifier.update(r.labels!, _subject);
+          if (before != after) _locked = null; // 장면이 바뀌면 템플릿 고정 해제
+        }
+      });
     });
   }
 
@@ -168,6 +189,15 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(msg), duration: const Duration(seconds: 2)));
+  }
+
+  void _setAutoScene(bool auto, {int? index}) {
+    setState(() {
+      _autoScene = auto;
+      if (index != null) _sceneIndex = index;
+      _locked = null;
+    });
+    _detector?.sceneEnabled = auto;
   }
 
   void _cycleTemplate() {
@@ -260,16 +290,24 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          itemCount: widget.scenes.length,
+          itemCount: widget.scenes.length + 1,
           separatorBuilder: (_, _) => const SizedBox(width: 8),
-          itemBuilder: (_, i) => ChoiceChip(
-            label: Text(widget.scenes[i].label),
-            selected: i == _sceneIndex,
-            onSelected: (_) => setState(() {
-              _sceneIndex = i;
-              _locked = null;
-            }),
-          ),
+          itemBuilder: (_, i) {
+            if (i == 0) {
+              return ChoiceChip(
+                avatar: const Icon(Icons.auto_awesome, size: 16),
+                label: Text(_autoScene ? '자동 · ${_scene.label}' : '자동'),
+                selected: _autoScene,
+                onSelected: (_) => _setAutoScene(true),
+              );
+            }
+            final idx = i - 1;
+            return ChoiceChip(
+              label: Text(widget.scenes[idx].label),
+              selected: !_autoScene && idx == _sceneIndex,
+              onSelected: (_) => _setAutoScene(false, index: idx),
+            );
+          },
         ),
       );
 

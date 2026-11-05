@@ -20,7 +20,11 @@ references/ (사진)  ──►  learner/ (Python, 구도 학습)  ──►  ap
   - "인물이 작아요 · 한 걸음 앞으로", "카메라를 오른쪽으로 조금 돌리세요"
   - "머리가 잘려요", "발끝이 잘려요"
   - 구도가 맞으면 "좋아요! 지금 찍으세요" + 셔터 테두리가 초록색으로
-- 장면 선택: 풍경 / 바다 / 도시·거리 / 건물·대칭 / 인물 클로즈업
+- **장면 자동 인식**: 카메라가 바다·풍경·도시·건물·인물 클로즈업을 스스로 판단해서 그에 맞는 구도로 안내
+  (ML Kit 이미지 라벨링, 0.8초마다 한 번, 같은 결과가 두 번 연속 나와야 바뀌어서 깜빡이지 않음)
+  - 인물이 화면 높이의 60% 이상이면 인물 클로즈업
+  - 라벨 → 장면 규칙은 `app/assets/scene_rules.json` 에서 고칠 수 있음
+  - 원하면 장면을 직접 골라 고정할 수도 있음
 - 구도 템플릿 자동 선택 (지금 화면과 가장 가까운 구도) 또는 탭해서 고정
 - **촬영**: 셔터 → 갤러리 `CameraSub` 앨범에 저장, 마지막 사진 썸네일 (탭하면 갤러리 열기)
 - 핀치 줌, 플래시(자동/끄기), 격자 켜기/끄기
@@ -49,6 +53,19 @@ cd app && flutter test
 
 ## 구도 학습 (`learner/`)
 
+### 방법 1: GitHub Actions 가 자동으로 학습 (사진 준비 필요 없음)
+
+`.github/workflows/train-templates.yml` 이
+1. [Openverse](https://openverse.org) 에서 장면별 **자유 라이선스(CC0, 퍼블릭 도메인, CC BY, CC BY-SA) 세로 사진**을 내려받고
+2. 구도를 학습해서
+3. `app/assets/templates.json` 과 학습 요약 `learner/reports/training_summary.md` 를 브랜치에 커밋합니다.
+
+`learner/` 가 바뀌어 push 될 때 자동으로 돌고, GitHub 의 Actions 탭에서 **Run workflow** 로 직접 돌릴 수도 있습니다
+(장면당 사진 수 조절 가능). 사진은 저장소에 올리지 않고, 사진별 출처는 실행 결과 Artifacts(`credits.jsonl`)에 30일간 보관됩니다.
+인물 사진이 8장 미만인 장면은 기존 기본 규칙을 유지합니다.
+
+### 방법 2: 직접 고른 사진으로 학습
+
 레퍼런스 사진마다 다음 특징을 뽑습니다.
 
 | 특징 | 방법 |
@@ -61,7 +78,10 @@ cd app && flutter test
 ```bash
 cd learner
 pip install -r requirements.txt
-python -m composition_learner.cli ../references --out ../app/assets/templates.json --features-out features.jsonl
+# (선택) Openverse 에서 사진 받기
+python -m composition_learner.fetch --out ../references --per-scene 80
+# 학습
+python -m composition_learner.cli ../references --out ../app/assets/templates.json --summary-out reports/training_summary.md
 pytest
 ```
 
@@ -75,7 +95,6 @@ pytest
 
 ## 다음 단계 아이디어
 
-- 장면 자동 인식 (바다/도시/건물을 카메라가 스스로 판단)
 - 휴대폰 높이(로우앵글) 안내: 기기 기울기(pitch) 활용
 - 여러 명 단체 사진 구도
 - 리딩라인(길·난간) 검출

@@ -92,3 +92,46 @@ def build_templates(
         )
 
     return {"schema_version": SCHEMA_VERSION, "scenes": scenes}
+
+
+def merge_with_existing(learned: dict, existing: dict | None, min_samples: int = 8) -> tuple[dict, list[str]]:
+    """학습 결과가 충분한 장면만 교체하고, 나머지는 기존(기본 규칙) 템플릿을 유지한다.
+
+    반환: (합쳐진 결과, 학습 결과로 교체된 장면 id 목록)
+    """
+    good = {s["id"]: s for s in learned["scenes"] if s["samples"] >= min_samples}
+    scenes = []
+    seen = set()
+    for s in (existing or {}).get("scenes", []):
+        scenes.append(good.get(s["id"], s))
+        seen.add(s["id"])
+    for sid, s in good.items():
+        if sid not in seen:
+            scenes.append(s)
+    return {"schema_version": SCHEMA_VERSION, "scenes": scenes}, sorted(good)
+
+
+def render_summary(result: dict, learned_ids: list[str], image_counts: dict[str, int], licenses: dict[str, int]) -> str:
+    lines = ["# 구도 학습 결과", ""]
+    lines.append("| 장면 | 사진 | 인물 검출 | 템플릿 | 출처 |")
+    lines.append("|---|---|---|---|---|")
+    for s in result["scenes"]:
+        learned = s["id"] in learned_ids
+        lines.append(
+            f"| {s['label']} | {image_counts.get(s['id'], 0)} | {s['samples'] if learned else '-'} | "
+            f"{len(s['templates'])} | {'학습' if learned else '기본 규칙'} |"
+        )
+    lines += ["", "## 학습된 템플릿", ""]
+    for s in result["scenes"]:
+        if s["id"] not in learned_ids:
+            continue
+        for t in s["templates"]:
+            lines.append(
+                f"- **{s['label']}** `{t['id']}`: {t['description']} "
+                f"(x={t['subject_cx']:.2f}, y={t['subject_cy']:.2f}, 키={t['subject_h']:.2f}, 사진 {t['support']}장)"
+            )
+    if licenses:
+        lines += ["", "## 사진 라이선스", ""]
+        lines += [f"- {k}: {v}장" for k, v in sorted(licenses.items())]
+        lines += ["", "사진 자체는 저장소에 올리지 않고, 위치·크기 같은 통계만 템플릿에 남깁니다."]
+    return "\n".join(lines) + "\n"
