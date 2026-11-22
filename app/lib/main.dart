@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'composition/scene_classifier.dart';
 import 'composition/templates.dart';
 import 'ui/camera_screen.dart';
+import 'ui/license_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,7 +27,7 @@ class CameraSubApp extends StatelessWidget {
       title: '구도 카메라',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: const Color(0xFF4ADE80), brightness: Brightness.dark, useMaterial3: true),
-      home: CameraScreen(shots: shots, sceneRules: sceneRules),
+      home: LicenseGate(child: CameraScreen(shots: shots, sceneRules: sceneRules)),
     );
   }
 }

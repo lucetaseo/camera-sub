@@ -51,6 +51,36 @@ cd app && flutter pub get && flutter run
 cd app && flutter test
 ```
 
+## 사용 기간 키 (`license_tool/`)
+
+앱은 **유효한 사용 키가 있을 때만** 열립니다. 키마다 만료 시각이 들어 있어서, 기간이 지나면(앱을 쓰는 중이어도) 키 입력 화면으로 바뀌고 새 키를 넣으면 다시 쓸 수 있습니다.
+
+- 키는 개인키로 **Ed25519 서명**한 것이고, 앱에는 공개키만 들어 있습니다. 인터넷 없이 검증되고, 앱을 뜯어봐도 새 키를 만들 수 없으며, 키의 날짜를 고치면 서명이 깨집니다.
+- 만료 5일 전부터 앱을 켤 때 "사용 기간이 n일 남았어요 · 새 키 입력" 을 알려줍니다. 새 키를 넣으면 그 키의 만료일로 바뀝니다.
+- 기기 시계를 과거로 돌리면(키 발급 시각 또는 앱이 마지막으로 본 시각보다 하루 넘게 이르면) 막습니다.
+
+### 처음 한 번
+
+```bash
+cd license_tool && pip install -r requirements.txt
+python license_tool.py init
+```
+
+`private_key.pem` 이 만들어지고 공개키가 `app/lib/license/license_public_key.dart` 에 들어갑니다. 이 파일을 커밋하고 앱을 빌드해 배포하세요.
+**`private_key.pem` 은 꼭 백업하고 절대 공유·커밋하지 마세요** (`.gitignore` 에 들어 있음). 잃어버리면 그 앱에 넣을 키를 더 만들 수 없고, 새로 `init` 하면 앱을 다시 배포해야 합니다.
+
+### 매달 키 발급
+
+```bash
+python license_tool.py issue --name 홍길동                 # 지금부터 30일
+python license_tool.py issue --name 홍길동 --until 2026-12-31   # 그날 23:59:59 (한국 시간)까지
+python license_tool.py show CS1-...                       # 받은 키 확인
+```
+
+출력된 `CS1-...` 한 줄을 사용자에게 보내면, 사용자는 앱의 키 입력 화면에 붙여 넣습니다. 발급 기록은 `license_tool/issued.csv` 에 남습니다.
+
+> 오프라인 방식의 한계: 키는 기기에 묶이지 않아서 같은 키를 여러 사람이 나눠 쓸 수 있고, 앱 데이터를 지우고 시계를 돌리는 식의 우회를 완전히 막지는 못합니다.
+
 ## 구도 학습 (`learner/`)
 
 ### 데이터
