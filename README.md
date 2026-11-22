@@ -51,6 +51,46 @@ cd app && flutter pub get && flutter run
 cd app && flutter test
 ```
 
+## 사용 기간 키 (`license_tool/`)
+
+앱은 **발급자가 만든 키를 입력해야** 실행되고, 키의 기간(기본 30일)이 지나면 잠깁니다.
+키는 개인키로 서명하고 앱에는 공개키만 들어 있어서, 인터넷 없이 검증되며 앱을 뜯어봐도 새 키를 만들 수 없습니다.
+기기 시계를 과거로 돌려 기간을 늘리는 것도 막습니다. 만료 5일 전부터 알림이 뜹니다.
+
+**처음 한 번 (발급자 PC에서)**
+
+```bash
+cd license_tool && pip install -r requirements.txt && python license_tool.py init
+```
+
+`private_key.pem` 이 만들어지고 `app/lib/license/license_public_key.dart` 에 공개키가 자동으로 들어갑니다.
+그 뒤 앱을 다시 빌드합니다. 공개키가 비어 있으면 앱은 어떤 키도 받지 않습니다.
+
+> `private_key.pem` 은 반드시 백업하고 **절대 공유하거나 커밋하지 마세요.** 이 파일이 있으면 누구나 키를 만들 수 있고, 잃어버리면 배포한 앱에 쓸 새 키를 만들 수 없습니다. (`.gitignore` 에 이미 들어 있습니다.)
+
+**키 발급**
+
+```bash
+python license_tool.py issue --name 홍길동
+```
+
+```bash
+python license_tool.py issue --name 홍길동 --until 2026-12-31
+```
+
+출력된 `CS1-...` 한 줄을 받는 사람에게 보내면, 앱의 키 입력 화면에 붙여 넣어 등록합니다. 발급 기록은 `license_tool/issued.csv` 에 남습니다.
+`--days 31` 처럼 일수를 바꿀 수 있고, `python license_tool.py show CS1-...` 로 키 내용을 확인합니다.
+
+**테스트**
+
+```bash
+cd license_tool && python -m pytest -q
+```
+
+```bash
+cd app && flutter test test/license_test.dart
+```
+
 ## 구도 학습 (`learner/`)
 
 ### 데이터
