@@ -9,3 +9,7 @@ learner/models/
 references/**/*
 !references/README.md
 learner/features.jsonl
+
+# 사용 기간 키: 개인키와 발급 기록은 절대 커밋하지 않음
+license_tool/private_key.pem
+license_tool/issued.csv
